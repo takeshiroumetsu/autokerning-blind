@@ -232,7 +232,7 @@ button.primary { background: #1f6feb; color: #fff; border-color: #1f6feb; }
 <div class="toolbar"><label><input type="checkbox" id="showHull"> 凸包を見せる</label>
 <span class="note">(青の線 = 凸包を使う字。灰の破線 = 約物・空白の組で凸包を使わない字)</span>
 <div id="bounds"></div>
-<span class="note">字種の境の足し: 隣り合う 2 字の字種が違う組に、どちら向きでも同じだけ足す(頁の全部の項目に効く)。</span></div>
+<span class="note">字種の足し: 「↔」は字種が変わる組に、どちら向きでも同じだけ足す。「どうし」は同じ字種が続く組に足す。どれも各項目の「広げる量」に上乗せし、頁の全部の項目に効く。</span></div>
 <div id="items"></div>
 <div class="card">
   <h2>共有</h2>
@@ -272,12 +272,14 @@ function knob(card, name, label, min, max, step, init, unit) {
 }
 
 const hullRows = [];
-const BOUNDS = [["han-hira", "漢字 ↔ ひらがな"], ["han-kata", "漢字 ↔ カタカナ"], ["hira-kata", "ひらがな ↔ カタカナ"]];
+const BOUNDS = [["han-hira", "漢字 ↔ ひらがな"], ["han-kata", "漢字 ↔ カタカナ"], ["hira-kata", "ひらがな ↔ カタカナ"],
+  ["hira-hira", "ひらがなどうし"], ["kata-kata", "カタカナどうし"]];
 const kindOf = (g) => /^[\p{Script=Han}々〆]/u.test(g) ? "han" : /^ー/u.test(g) ? "kata"
   : /^\p{Script=Hiragana}/u.test(g) ? "hira" : /^\p{Script=Katakana}/u.test(g) ? "kata" : "other";
 function boundKey(a, b) {
   const x = kindOf(a), y = kindOf(b);
-  if (x === y || x === "other" || y === "other") return null;
+  if (x === "other" || y === "other") return null;
+  if (x === y) return x === "han" ? null : `${x}-${x}`;
   const order = ["han", "hira", "kata"];
   return order.indexOf(x) < order.indexOf(y) ? `${x}-${y}` : `${y}-${x}`;
 }
@@ -383,7 +385,7 @@ window.addEventListener("resize", drawHulls);
 document.fonts.ready.then(drawHulls);
 document.getElementById("make").addEventListener("click", () => {
   const lines = [`hull-try build ${BUILD} ${new Date().toISOString()}`,
-    "字種の境: " + BOUNDS.map(([k, l]) => `${l} ${Number(boundKnobs[k].input.value).toFixed(3)}em`).join(" / ")];
+    "字種の足し: " + BOUNDS.map(([k, l]) => `${l} ${Number(boundKnobs[k].input.value).toFixed(3)}em`).join(" / ")];
   for (const item of DATA.items) {
     const r = store[item.id];
     if (!r) { lines.push(`${item.id}: 未記録`); continue; }
