@@ -379,7 +379,8 @@ function kindKey(a, b) {
     const order = ['han', 'hira', 'kata'];
     return (order.indexOf(x) < order.indexOf(y) ? `${x}-${y}` : `${y}-${x}`);
 }
-const PUNCT_AFTER = /^[、。,.，．]$/u;
+// 和文の句読点だけ。半角の . , は欧字の中(「17.0」「1,200」)なので足さない(2026-10-16 の誤りの修正)
+const PUNCT_AFTER = /^[、。，．]$/u;
 const OPEN_BR = /^[「『（(〔［[【〈《｛{]$/u;
 const CLOSE_BR = /^[」』）)〕］\]】〉》｝}]$/u;
 /** 組 (a, b) に足す量の鍵の並び。字種・「、。のあと」(a が 、。)・「かっこの外側」(b が始まりかっこ、または a が終わりかっこ) */
