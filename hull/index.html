@@ -228,7 +228,7 @@ button.primary { background: #1f6feb; color: #fff; border-color: #1f6feb; }
 <p class="note">
 盲検ではありません。各項目の上の行は、隣り合う 2 字の「境界の図形」が接するところまで寄せてから、全部の組を同じだけ広げたものです。下の行「元」は字間を足さない元の組みです(参考)。<br>
 境界の図形は、凸包(字を輪ゴムで囲んだ形)と、字の輪郭を距離 r だけ太らせた形を合わせたものです。「和」は凸包に太らせた輪郭を足した形(r = 0 で凸包だけ)、「積」は凸包のうち輪郭から r 以内の部分(r = 0 で字そのもの)です。帯は使いません。<br>
-つまみ「広げる量」は図形が接した状態からの空きです。図形を変えると、広げる量も初期値の差だけ一緒に動きます。初期値は、記事の全部の組の真ん中の組が元の送りのままになる量です。約物(palt が効くもの)・空白の組は凸包を使わず、つまみも効きません。<br>
+つまみ「広げる量」は図形が接した状態からの空きで、0 なら図形どうしがちょうど接します(負にすると図形が重なります)。図形を変えても広げる量は動きません。初期値は、記事の全部の組の真ん中の組が元の送りのままになる量です。約物(palt が効くもの)・空白の組は凸包を使わず、つまみも効きません。<br>
 見やすい量に合わせ、許容できるかとひとことを書いて「記録」を押してください。最後に「共有用のテキストを出す」でコピーして送ってください。
 </p>
 <div class="toolbar"><details open><summary>図形と字種のつまみ(閉じると画面が広くなる)</summary>
@@ -357,7 +357,8 @@ const hullRows = [];
 const RG = DATA.rGrid;
 const geo = { mode: store.__mode || "union", rIdx: store.__rIdx ?? 0 };
 const rEm = () => RG[geo.rIdx];
-const s0Of = (item) => item.s0[geo.mode][geo.rIdx];
+// 広げる量の初期値は図形によらず、凸包だけ(和・r = 0)で真ん中の組が元の送りになる量。図形を変えても広げる量は動かさない
+const s0Of = (item) => item.s0.union[0];
 const spansOf = new Map();
 /** 今の図形で組 i の k0(接する送り − 元の送り)。図形を使わない組は null */
 function k0Of(item, i) {
@@ -497,16 +498,10 @@ for (const item of DATA.items) {
 }
 
 document.getElementById("showHull").addEventListener("change", drawHulls);
-// 図形を変えたら、各項目の広げる量を初期値の差だけずらす(真ん中の組から見た空きを保つ)
+// 図形を変えても広げる量は動かさない(広げる量は、いつも図形が接した状態からの空き)
 function setGeometry(mode, rIdx) {
-  const before = new Map(DATA.items.map((it) => [it.id, s0Of(it)]));
   geo.mode = mode; geo.rIdx = rIdx;
   store.__mode = mode; store.__rIdx = rIdx; save();
-  for (const it of DATA.items) {
-    const k = sKnobs.get(it.id);
-    k.input.value = String(Number(k.input.value) + s0Of(it) - before.get(it.id));
-    k.apply();
-  }
   document.getElementById("rOut").textContent = rEm().toFixed(2) + "em";
   applyGeometry();
   drawHulls();
