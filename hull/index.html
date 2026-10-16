@@ -194,7 +194,7 @@ h1 { font-size: 18px; margin: 4px 0 8px; }
 .label { flex: 0 0 2.6em; white-space: nowrap; font: 600 16px var(--ui); padding-top: 4px; }
 .text { flex: 1 1 auto; line-height: 1.5; word-break: break-all; text-spacing-trim: normal; }
 .text.palt { font-feature-settings: "palt"; }
-.g { letter-spacing: calc(var(--k0) + var(--ak-s) * var(--h) + var(--bnd, 0em)); }
+.g { letter-spacing: calc(var(--k0) + (var(--ak-all) + var(--ak-s)) * var(--h) + var(--bnd, 0em)); }
 .ref .g { letter-spacing: 0; }
 .ref { color: #666; }
 .text { position: relative; }
@@ -204,11 +204,15 @@ h1 { font-size: 18px; margin: 4px 0 8px; }
 .bl { display: inline-block; width: 0; height: 0; vertical-align: baseline; }
 .toolbar .knob { max-width: 640px; }
 .toolbar .knob span.name { flex: 0 0 9em; }
+.tabs { display: flex; gap: 6px; margin: 6px 0; }
+.tabs button { margin: 0; padding: 4px 12px; }
+.tabs button[aria-pressed="true"] { background: #1f6feb; color: #fff; border-color: #1f6feb; }
+.secHead { font-size: 16px; margin: 24px 0 8px; }
 .toolbar summary { cursor: pointer; font-weight: 600; }
 .toolbar { max-height: 60vh; overflow-y: auto; position: sticky; top: 0; z-index: 2; background: #fff; padding: 6px 0; margin: 0 0 12px; border-bottom: 1px solid #ddd; font-size: 14px; }
 .knobs { margin: 10px 0; padding: 8px; background: #f6f6f6; border-radius: 6px; font-size: 13px; }
 .knob { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
-.knob span.name { flex: 0 0 6.5em; }
+.knob span.name { flex: 0 0 9em; }
 .knob input[type=range] { flex: 1 1 auto; }
 .knob output { flex: 0 0 5.5em; text-align: right; font-variant-numeric: tabular-nums; }
 .q { font-size: 14px; margin: 10px 0; }
@@ -228,18 +232,21 @@ button.primary { background: #1f6feb; color: #fff; border-color: #1f6feb; }
 <p class="note">
 盲検ではありません。各項目の上の行は、隣り合う 2 字の「境界の図形」が接するところまで寄せてから、全部の組を同じだけ広げたものです。下の行「元」は字間を足さない元の組みです(参考)。<br>
 境界の図形は、凸包(字を輪ゴムで囲んだ形)と、字の輪郭を距離 r だけ太らせた形を合わせたものです。「和」は凸包に太らせた輪郭を足した形(r = 0 で凸包だけ)、「積」は凸包のうち輪郭から r 以内の部分(r = 0 で字そのもの)です。帯は使いません。<br>
-つまみ「広げる量」は図形が接した状態からの空きで、0 なら図形どうしがちょうど接します(負にすると図形が重なります)。図形を変えても広げる量は動きません。初期値は、記事の全部の組の真ん中の組が元の送りのままになる量です。約物(palt が効くもの)・空白の組は凸包を使わず、つまみも効きません。<br>
+図形・全体を広げる量・字種の足しは、上の帯で節ごとに決めます。各項目の「この項目だけ足す」は、その項目にだけ上乗せします(初期 0)。広げる量 0 で図形どうしがちょうど接します。初期値は、記事の全部の組の真ん中の組が元の送りのままになる量です。約物(palt が効くもの)・空白の組は凸包を使わず、つまみも効きません。<br>
 見やすい量に合わせ、許容できるかとひとことを書いて「記録」を押してください。最後に「共有用のテキストを出す」でコピーして送ってください。
 </p>
 <div class="toolbar"><details open><summary>図形と字種のつまみ(閉じると画面が広くなる)</summary>
 <label><input type="checkbox" id="showHull"> 境界の図形を見せる</label>
 <span class="note">(青 = 寄せに使う図形を横から見た縁。灰の破線 = 約物・空白の組で使わない字)</span>
+<div class="tabs" id="tabs"></div>
+<div class="knob"><span class="name">全体を広げる量</span><input type="range" id="sAll" min="-0.2" max="0.5" step="0.005"><output id="sOut"></output></div>
 <div class="knob"><span class="name">図形の合わせ方</span>
 <label><input type="radio" name="mode" value="union" id="modeUnion"> 和(凸包 + 太らせた輪郭)</label>
 <label><input type="radio" name="mode" value="intersect" id="modeIntersect"> 積(凸包 ∩ 太らせた輪郭)</label></div>
 <div class="knob"><span class="name">輪郭からの距離 r</span><input type="range" id="rIdx" min="0" step="1"><output id="rOut"></output></div>
 <div id="bounds"></div>
-<span class="note">字種の足し: 「↔」は字種が変わる組に、どちら向きでも同じだけ足す。「どうし」は同じ字種が続く組に足す。どれも各項目の「広げる量」に上乗せし、頁の全部の項目に効く。</span></details></div>
+<span class="note">つまみは節(1/4〜4/4)ごと。上の番号で節を選ぶ(頁を送ると、見ている節に切り替わる)。全体を広げる量は図形が接した状態からの空き(0 で接する)。字種の足しは「↔」が字種の変わる組(どちら向きも同じ)、「どうし」が同じ字種の続く組。</span>
+<div><button id="copyFrom1">1/4 の設定をこの節に写す</button></div></details></div>
 <div id="items"></div>
 <div class="card">
   <h2>共有</h2>
@@ -355,15 +362,27 @@ function knob(card, name, label, min, max, step, init, unit) {
 
 const hullRows = [];
 const RG = DATA.rGrid;
-const geo = { mode: store.__mode || "union", rIdx: store.__rIdx ?? 0 };
-const rEm = () => RG[geo.rIdx];
-// 広げる量の初期値は図形によらず、凸包だけ(和・r = 0)で真ん中の組が元の送りになる量。図形を変えても広げる量は動かさない
-const s0Of = (item) => item.s0.union[0];
+// 節ごとの設定。1/4 の初期値は user が 2026-10-16 に選んだ値(和・r 0・字種 0.1/0.1/0.08/0.08/0.08・全体 0.05em)
+const USER_SEC1 = { mode: "union", rIdx: 0, s: 0.05, bounds: { "han-hira": 0.1, "han-kata": 0.1, "hira-kata": 0.08, "hira-hira": 0.08, "kata-kata": 0.08 } };
+const secOf = (item) => item.id.split("-")[0];
+const firstItem = (sec) => DATA.items.find((it) => secOf(it) === sec);
+const secState = store.__sec || (() => {
+  const st = {};
+  for (const sec of ["1", "2", "3", "4"]) {
+    // 2〜4 の全体の初期値は、凸包だけ(和・r 0)で記事の真ん中の組が元の送りになる量
+    st[sec] = sec === "1" ? JSON.parse(JSON.stringify(USER_SEC1)) : { mode: "union", rIdx: 0, s: firstItem(sec).s0.union[0], bounds: {} };
+  }
+  return st;
+})();
+store.__sec = secState;
+const geoOf = (item) => secState[secOf(item)];
+const rEmOf = (item) => RG[geoOf(item).rIdx];
+let active = "1";
 const spansOf = new Map();
 /** 今の図形で組 i の k0(接する送り − 元の送り)。図形を使わない組は null */
 function k0Of(item, i) {
   if (!item.hull[i]) return null;
-  const t = touchAdvance(item.shapes[i], item.shapes[i + 1], rEm(), geo.mode);
+  const t = touchAdvance(item.shapes[i], item.shapes[i + 1], rEmOf(item), geoOf(item).mode);
   return t === null ? null : t - item.tOrig[i];
 }
 function applyGeometry() {
@@ -387,13 +406,24 @@ function boundKey(a, b) {
   const order = ["han", "hira", "kata"];
   return order.indexOf(x) < order.indexOf(y) ? `${x}-${y}` : `${y}-${x}`;
 }
-const boundStore = store.__bounds || {};
-const boundKnobs = {};
+const secEls = {};
+/** 節の CSS 変数(全体を広げる量・字種の足し)を節の要素へ書く */
+function applySecVars(sec) {
+  const st = secState[sec];
+  secEls[sec].style.setProperty("--ak-all", st.s + "em");
+  for (const [key] of BOUNDS) secEls[sec].style.setProperty(`--b-${key}`, (st.bounds[key] ?? 0) + "em");
+}
+const boundInputs = {};
 for (const [key, label] of BOUNDS) {
-  const k = knob(document.documentElement, `--b-${key}`, label, -0.1, 0.2, 0.005, boundStore[key] ?? 0, "em");
-  k.input.addEventListener("input", () => { boundStore[key] = Number(k.input.value); store.__bounds = boundStore; save(); drawHulls(); });
-  boundKnobs[key] = k;
-  document.getElementById("bounds").append(k.row);
+  const input = el("input", { type: "range", min: "-0.1", max: "0.2", step: "0.005" });
+  const out = el("output");
+  input.addEventListener("input", () => {
+    secState[active].bounds[key] = Number(input.value); save();
+    out.textContent = Number(input.value).toFixed(3) + "em";
+    applySecVars(active); drawHulls();
+  });
+  boundInputs[key] = { input, out };
+  document.getElementById("bounds").append(el("div", { class: "knob" }, el("span", { class: "name", text: label }), input, out));
 }
 const SVGNS = "http://www.w3.org/2000/svg";
 const sKnobs = new Map();
@@ -416,7 +446,8 @@ function drawHulls() {
       if (!r) return;
       // 字の原点 = span の左端。ベースライン = 同じ行の .bl の位置
       const bl = baselineOf(text, r);
-      const rPx = rEm() * g.em;
+      const geo = geoOf(item);
+      const rPx = rEmOf(item) * g.em;
       const top = Math.ceil(Math.min(...g.hull.map((p) => p[1]))) - (geo.mode === "union" ? Math.floor(rPx) : 0);
       const bottom = Math.floor(Math.max(...g.hull.map((p) => p[1]))) - 1 + (geo.mode === "union" ? Math.floor(rPx) : 0);
       const right = [], left = [];
@@ -444,6 +475,13 @@ function baselineOf(text, r) {
   return r.top + (text.querySelector(".bl").getBoundingClientRect().top - first.top);
 }
 
+for (const sec of ["1", "2", "3", "4"]) {
+  const box = el("section", { class: "sec", "data-sec": sec },
+    el("h2", { class: "secHead", text: `${sec}/4 ${firstItem(sec).family}${firstItem(sec).palt ? "(palt)" : "(ベタ)"}` }));
+  secEls[sec] = box;
+  document.getElementById("items").append(box);
+  applySecVars(sec);
+}
 for (const item of DATA.items) {
   const [sec, n] = item.id.split("-");
   const title = item.kind === "headline"
@@ -466,11 +504,11 @@ for (const item of DATA.items) {
     card.append(el("div", { class: "row" + (ref ? " ref" : "") }, el("div", { class: "label", text: label }), text));
   }
   const saved = store[item.id];
-  const s = knob(card, "--ak-s", "広げる量", -0.2, 0.5, 0.005, saved ? saved.s : s0Of(item), "em");
+  const s = knob(card, "--ak-s", "この項目だけ足す", -0.2, 0.3, 0.005, saved && saved.extra !== undefined ? saved.extra : 0, "em");
   s.input.addEventListener("input", drawHulls);
   sKnobs.set(item.id, s);
-  const reset = el("button", { text: "つまみを初期値に戻す" });
-  reset.addEventListener("click", () => { s.input.value = String(s0Of(item)); s.apply(); drawHulls(); });
+  const reset = el("button", { text: "0 に戻す" });
+  reset.addEventListener("click", () => { s.input.value = "0"; s.apply(); drawHulls(); });
   card.append(el("div", { class: "knobs" }, s.row, reset));
   const acc = el("div", { class: "accept" }, el("b", { text: "図形" }));
   for (const [v, t] of [["ok", "許容できる"], ["ng", "許容できない"]]) {
@@ -487,44 +525,87 @@ for (const item of DATA.items) {
   rec.addEventListener("click", () => {
     const accept = (card.querySelector(`input[name="acc-${item.id}"]:checked`) || {}).value || null;
     const prev = store[item.id];
-    store[item.id] = { accept, s: Number(s.input.value), mode: geo.mode, r: rEm(), comment: comment.value.trim(),
+    const st = secState[sec];
+    store[item.id] = { accept, extra: Number(s.input.value), s: st.s + Number(s.input.value), mode: st.mode, r: RG[st.rIdx],
+      bounds: { ...st.bounds }, comment: comment.value.trim(),
       count: (prev ? prev.count : 0) + 1, at: new Date().toISOString() };
     save();
     status.className = "status";
     status.textContent = `記録済み(${store[item.id].count} 回目)`;
   });
   card.append(rec, status);
-  document.getElementById("items").append(card);
+  secEls[sec].append(card);
 }
 
 document.getElementById("showHull").addEventListener("change", drawHulls);
-// 図形を変えても広げる量は動かさない(広げる量は、いつも図形が接した状態からの空き)
-function setGeometry(mode, rIdx) {
-  geo.mode = mode; geo.rIdx = rIdx;
-  store.__mode = mode; store.__rIdx = rIdx; save();
-  document.getElementById("rOut").textContent = rEm().toFixed(2) + "em";
-  applyGeometry();
-  drawHulls();
-}
 const rInput = document.getElementById("rIdx");
+const sAll = document.getElementById("sAll");
 rInput.max = String(RG.length - 1);
-rInput.value = String(geo.rIdx);
-document.getElementById("rOut").textContent = rEm().toFixed(2) + "em";
-document.getElementById(geo.mode === "union" ? "modeUnion" : "modeIntersect").checked = true;
-rInput.addEventListener("input", () => setGeometry(geo.mode, Number(rInput.value)));
-for (const id of ["modeUnion", "modeIntersect"]) document.getElementById(id).addEventListener("change", (e) => setGeometry(e.target.value, geo.rIdx));
+/** 道具の帯のつまみを、選んだ節の設定で埋める */
+function showSection(sec) {
+  active = sec;
+  const st = secState[sec];
+  for (const b of document.querySelectorAll("#tabs button")) b.setAttribute("aria-pressed", String(b.dataset.sec === sec));
+  rInput.value = String(st.rIdx);
+  document.getElementById("rOut").textContent = RG[st.rIdx].toFixed(2) + "em";
+  sAll.value = String(st.s);
+  document.getElementById("sOut").textContent = st.s.toFixed(3) + "em";
+  document.getElementById(st.mode === "union" ? "modeUnion" : "modeIntersect").checked = true;
+  for (const [key] of BOUNDS) {
+    const v = st.bounds[key] ?? 0;
+    boundInputs[key].input.value = String(v);
+    boundInputs[key].out.textContent = v.toFixed(3) + "em";
+  }
+  document.getElementById("copyFrom1").hidden = sec === "1";
+}
+function changed() { save(); applySecVars(active); applyGeometry(); drawHulls(); }
+for (const sec of ["1", "2", "3", "4"]) {
+  const b = el("button", { text: `${sec}/4` });
+  b.dataset.sec = sec;
+  b.addEventListener("click", () => { showSection(sec); secEls[sec].scrollIntoView({ behavior: "smooth" }); });
+  document.getElementById("tabs").append(b);
+}
+rInput.addEventListener("input", () => {
+  secState[active].rIdx = Number(rInput.value);
+  document.getElementById("rOut").textContent = RG[secState[active].rIdx].toFixed(2) + "em";
+  changed();
+});
+sAll.addEventListener("input", () => {
+  secState[active].s = Number(sAll.value);
+  document.getElementById("sOut").textContent = secState[active].s.toFixed(3) + "em";
+  changed();
+});
+for (const id of ["modeUnion", "modeIntersect"]) document.getElementById(id).addEventListener("change", (e) => { secState[active].mode = e.target.value; changed(); });
+document.getElementById("copyFrom1").addEventListener("click", () => {
+  secState[active] = JSON.parse(JSON.stringify(secState["1"]));
+  store.__sec = secState;
+  showSection(active); changed();
+});
+// 頁を送ったら、画面の上のほうにある節に切り替える
+window.addEventListener("scroll", () => {
+  const barBottom = document.querySelector(".toolbar").getBoundingClientRect().bottom;
+  let current = active;
+  for (const sec of ["1", "2", "3", "4"]) if (secEls[sec].getBoundingClientRect().top <= barBottom + 40) current = sec;
+  if (current !== active) showSection(current);
+}, { passive: true });
+showSection("1");
 applyGeometry();
 window.addEventListener("resize", drawHulls);
 document.fonts.ready.then(drawHulls);
 document.getElementById("make").addEventListener("click", () => {
-  const lines = [`hull-try build ${BUILD} ${new Date().toISOString()}`,
-    "字種の足し: " + BOUNDS.map(([k, l]) => `${l} ${Number(boundKnobs[k].input.value).toFixed(3)}em`).join(" / ")];
+  const lines = [`hull-try build ${BUILD} ${new Date().toISOString()}`];
+  for (const sec of ["1", "2", "3", "4"]) {
+    const st = secState[sec];
+    lines.push(`${sec}/4 設定: ${st.mode === "union" ? "和" : "積"} r=${RG[st.rIdx].toFixed(2)} | 全体 ${st.s.toFixed(3)}em | ` +
+      BOUNDS.map(([k, l]) => `${l} ${(st.bounds[k] ?? 0).toFixed(3)}`).join(" / "));
+  }
   for (const item of DATA.items) {
     const r = store[item.id];
     if (!r) { lines.push(`${item.id}: 未記録`); continue; }
     const acc = r.accept === "ok" ? "可" : r.accept === "ng" ? "不可" : "-";
     const geoText = r.mode ? `${r.mode === "union" ? "和" : "積"} r=${r.r.toFixed(2)}` : "-";
-    lines.push(`${item.id}: 図形=${acc} | ${geoText} | 広げる量=${r.s.toFixed(3)}em | 記録${r.count}回 ${r.at}` +
+    const extra = r.extra !== undefined ? `この項目だけ ${r.extra.toFixed(3)}em | ` : "";
+    lines.push(`${item.id}: 図形=${acc} | ${geoText} | ${extra}広げる量(全体+項目)=${r.s.toFixed(3)}em | 記録${r.count}回 ${r.at}` +
       (r.comment ? ` | ${r.comment.replace(/\s+/g, " ")}` : ""));
   }
   document.getElementById("share").value = lines.join("\n");
