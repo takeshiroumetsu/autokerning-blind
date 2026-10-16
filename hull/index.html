@@ -192,10 +192,11 @@ h1 { font-size: 18px; margin: 4px 0 8px; }
 .row { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-top: 1px dashed #ddd; }
 .row:first-of-type { border-top: none; }
 .label { flex: 0 0 2.6em; white-space: nowrap; font: 600 16px var(--ui); padding-top: 4px; }
-.text { flex: 1 1 auto; line-height: 1.5; word-break: break-all; text-spacing-trim: normal; }
+.text { flex: 1 1 auto; line-height: 1.5; text-spacing-trim: normal; }
 .text.palt { font-feature-settings: "palt"; }
 .g { letter-spacing: calc(var(--k0) + (var(--ak-all) + var(--ak-s)) * var(--h) + var(--bnd, 0em) + var(--pa, 0em) + var(--bo, 0em)); }
 .ref .g { letter-spacing: 0; }
+.lsdbg { font: 11px/1.5 ui-monospace, monospace; color: #666; word-break: break-all; margin: 2px 0 6px; }
 .ref { color: #666; }
 .text { position: relative; }
 .hulls { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
@@ -658,6 +659,23 @@ showSection("1");
 applyGeometry();
 window.addEventListener("resize", drawHulls);
 document.fonts.ready.then(drawHulls);
+// 頁の URL に #ls を付けると、図形の行の下に、各字に付いた字間(letter-spacing)と次の字までの送りを px で出す(端末ごとの描画の違いを調べる用)
+function showLs() {
+  if (location.hash !== "#ls") return;
+  for (const { text } of hullRows) {
+    let out = text.parentElement.nextElementSibling;
+    if (!out || !out.classList.contains("lsdbg")) { out = el("div", { class: "lsdbg" }); text.parentElement.after(out); }
+    const spans = [...text.querySelectorAll(".g")];
+    out.textContent = spans.map((sp, i) => {
+      const a = sp.getBoundingClientRect(), b = spans[i + 1]?.getBoundingClientRect();
+      const adv = b && Math.abs(b.top - a.top) < 2 ? (b.left - a.left).toFixed(1) : "-";
+      return `${sp.textContent} ${(parseFloat(getComputedStyle(sp).letterSpacing) || 0).toFixed(1)}/${adv}`;
+    }).join("  ") + "  | " + navigator.userAgent;
+  }
+}
+document.fonts.ready.then(showLs);
+document.addEventListener("input", () => setTimeout(showLs, 0));
+window.addEventListener("hashchange", showLs);
 document.getElementById("make").addEventListener("click", () => {
   const lines = [`hull-try build ${BUILD} ${new Date().toISOString()}`];
   for (const sec of ["1", "2", "3", "4"]) {
